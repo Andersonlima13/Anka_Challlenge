@@ -1,0 +1,56 @@
+Analise de requisitos : 
+
+Aplicacao para escritorio de investimentos
+
+
+Regras de negocio : 
+Cada cliente pode ter varios ativos
+ativo deve pertencer ao cliente
+é possivel registrar entradas e saidas de dinheiro
+na conta desses clientes
+
+Oque o escritorio deve visualizar ? 
+● Fazer login na plataforma com email e senha (todos os clientes);
+● Alocação total (todos os clientes);
+● Alocação por cliente;
+● Captação total (entradas/saídas do escritório inteiro);
+● Captação por cliente.
+
+
+
+Desenvolvimento da API
+
+Desenvolver o fluxo de auth basico com jwt 
+Desenvolver o fluxo basico de crud de clientes
+com o Postgree usando orm do python
+Desenvolver o fluxo de ativos crud por cliente 
+- Pesquisar sobre a api do yahoo finance 
+(ativos pertecem ao cliente)
+Deve ser um crud de ativos em razão de clientes
+ex : cliente1/ativo1 cliente1/ativo2/
+Desenvolver crudo
+Desenvolver fluxo de pagamentos, entrada/saida de dinheiro
+
+
+Estrutura 
+
+● users (id, email, password, is_active)
+
+● Clients (id, name, email, is_active, created_at)
+Assets (id, ticker, name, exchange, currency)
+
+● Allocations(id, client_id, asset_id, quantity, buy_price,
+buy_date)
+
+● Movimentações (id, client_id, type(deposit|withdrawal),
+amount, date, note)
+
+
+seguir o modelo de arquitetura em camadas
+
+
+
+
+
+
+
