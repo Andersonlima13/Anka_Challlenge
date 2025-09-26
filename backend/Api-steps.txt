@@ -37,6 +37,7 @@ Estrutura
 ● users (id, email, password, is_active)
 
 ● Clients (id, name, email, is_active, created_at)
+
 Assets (id, ticker, name, exchange, currency)
 
 ● Allocations(id, client_id, asset_id, quantity, buy_price,
