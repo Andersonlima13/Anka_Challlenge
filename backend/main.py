@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from config.database import SessionLocal, engine, Base
-from controller import userController, authController
+from controller import clientController, userController, authController
 import model
 
 # Não precisa do create_all() se estiver usando Alembic
@@ -11,9 +11,9 @@ app = FastAPI()
 
 # Users já têm Depends(get_current_user) definidos dentro do controller
 app.include_router(userController.router)
-
-# Rotas de autenticação (login/logout)
 app.include_router(authController.router)
+app.include_router(clientController.router)
+
 
 
 @app.get("/")
