@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from config.database import SessionLocal
 from service.userService import UserService
 from dto.users import UserCreateDTO, UserResponseDTO
-from controller.authController import get_current_user  # JWT
+from service.authService import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

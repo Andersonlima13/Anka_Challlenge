@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from config.database import SessionLocal
-from service.userService import UserService
+from service.authService import AuthService, get_current_user
 from dto.auth import TokenResponseDTO
 from datetime import timedelta
-from config.auth import create_access_token, verify_token
-from model.users import Users
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+class LoginDTO(BaseModel):
+    email: str
+    password: str
 
 def get_db():
     db = SessionLocal()
@@ -19,32 +19,21 @@ def get_db():
     finally:
         db.close()
 
+# Rota de login (DESPROTEGIDA)
 @router.post("/login", response_model=TokenResponseDTO)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    service = UserService(db)
-    user = service.authenticate(form_data.username, form_data.password)
+def login(data: LoginDTO, db: Session = Depends(get_db)):
+    auth_service = AuthService(db)
+    user = auth_service.authenticate_user(data.email, data.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    access_token = create_access_token(
+    
+    access_token = auth_service.create_access_token(
         data={"sub": str(user.id)}, expires_delta=timedelta(minutes=60)
     )
     return TokenResponseDTO(access_token=access_token)
 
+# Rota de logout (PROTEGIDA)
 @router.post("/logout")
-def logout():
-    return {"message": "Logout successful"}
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> Users:
-    payload = verify_token(token)
-    if not payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-    service = UserService(db)
-    user = service.get_model_by_id(int(user_id))
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
+def logout(current_user=Depends(get_current_user)):
+    # Aqui você poderia adicionar lógica de blacklist de tokens, etc.
+    return {"message": f"Logout successful for user {current_user.email}"}

@@ -20,10 +20,10 @@ Oque o escritorio deve visualizar ?
 
 Desenvolvimento da API
 
-Desenvolver o fluxo de auth basico com jwt 
-Desenvolver o fluxo basico de crud de clientes
-com o Postgree usando orm do python
-Desenvolver o fluxo de ativos crud por cliente 
+Desenvolver o fluxo de auth basico com jwt   || feito
+Desenvolver o fluxo basico de crud de clientes || feito
+com o Postgree usando orm do python         || feito
+Desenvolver o fluxo de ativos crud por cliente  
 - Pesquisar sobre a api do yahoo finance 
 (ativos pertecem ao cliente)
 Deve ser um crud de ativos em razão de clientes

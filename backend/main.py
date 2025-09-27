@@ -1,21 +1,24 @@
 import uvicorn
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from config.database import SessionLocal, engine, Base
-from controller import userController
-from controller.authController import get_current_user
-
+from controller import userController, authController
 import model
 
-Base.metadata.create_all(bind=engine)
+# Não precisa do create_all() se estiver usando Alembic
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Users já têm Depends(get_current_user) definidos dentro do controller
 app.include_router(userController.router)
-app.include_router(userController.router, dependencies=[Depends(get_current_user)])
+
+# Rotas de autenticação (login/logout)
+app.include_router(authController.router)
+
 
 @app.get("/")
 def root():
     return {"message": "API funcionando 🚀"}
-
 
 
 if __name__ == "__main__":

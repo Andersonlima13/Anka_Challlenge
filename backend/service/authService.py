@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
-from database import SessionLocal
+from config.database import SessionLocal
 from model.users import Users
 from service.userService import UserService
 from typing import Optional
