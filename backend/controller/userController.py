@@ -30,7 +30,7 @@ def get_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(g
 @router.post("/", response_model=UserResponseDTO)
 def create_user(user: UserCreateDTO, db: Session = Depends(get_db)):
     service = UserService(db)
-    return service.create(user)  # não protegido para criar o primeiro usuário
+    return service.create(user) 
 
 @router.delete("/{user_id}", response_model=UserResponseDTO)
 def delete_user(user_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):

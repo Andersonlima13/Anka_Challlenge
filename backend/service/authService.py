@@ -34,9 +34,12 @@ class AuthService:
     # autentica usuário pelo email e senha
     def authenticate_user(self, email: str, password: str) -> Optional[Users]:
         user = self.user_service.get_by_email(email)
-        if not user or not pwd_context.verify(password, user.password):
+        if not user:
+            return None
+        if not pwd_context.verify(password[:72], user.password):
             return None
         return user
+
 
     # cria JWT
     def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:

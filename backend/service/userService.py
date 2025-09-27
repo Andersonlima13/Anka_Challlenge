@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 class UserService:
     def __init__(self, db: Session):
         self.db = db
@@ -26,17 +27,14 @@ class UserService:
     def get_by_email(self, email: str) -> Optional[Users]:
         return self.db.query(Users).filter(Users.email == email).first()
 
-    def authenticate(self, email: str, password: str) -> Optional[Users]:
-        user = self.get_by_email(email)
-        if not user:
-            return None
-        if not pwd_context.verify(password, user.password):
-            return None
-        return user
-
     def create(self, user_data: UserCreateDTO) -> UserResponseDTO:
-        hashed_pw = pwd_context.hash(user_data.password)
-        new_user = Users(email=user_data.email, password=hashed_pw, is_active=True)
+        raw_password = user_data.password[:72]  # garante limite do bcrypt
+        hashed_pw = pwd_context.hash(raw_password)
+        new_user = Users(
+            email=user_data.email,
+            password=hashed_pw,
+            is_active=True
+        )
         self.db.add(new_user)
         try:
             self.db.commit()
