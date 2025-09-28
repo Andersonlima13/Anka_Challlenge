@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from config.database import SessionLocal, engine, Base
-from controller import clientController, userController, authController
+from controller import allocationController, assetController, clientController, userController, authController
 import model
 
 # Não precisa do create_all() se estiver usando Alembic
@@ -13,6 +13,8 @@ app = FastAPI()
 app.include_router(userController.router)
 app.include_router(authController.router)
 app.include_router(clientController.router)
+app.include_router(assetController.router)
+app.include_router(allocationController.router)
 
 
 
