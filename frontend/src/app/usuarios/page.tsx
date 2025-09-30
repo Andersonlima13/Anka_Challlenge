@@ -91,10 +91,7 @@ export default function Usuarios() {
     <ToastProvider>
       <DashboardLayout activeItem="usuarios">
         <div className="flex justify-between items-center mb-6">
-          <MonthSelector
-            selectedMonth={selectedMonth}
-            onMonthChange={setSelectedMonth}
-          />
+       
           <Button
             className="flex items-center gap-2"
             variant="default"
@@ -172,7 +169,7 @@ export default function Usuarios() {
                   .map((user, idx) => {
                     const isEditing = editingUser === user.email;
                     return (
-                      <tr key={idx} className="border-b border-border last:border-0">
+                      <tr key={idx} className="border-b border-border last:border-0 text-foreground">
                         <td className="py-2 px-3">
                           <input
                             type="checkbox"
@@ -243,7 +240,7 @@ export default function Usuarios() {
                             {isEditing ? (
                               <Check className="w-4 h-4 text-green-500" />
                             ) : (
-                              <Pencil className="w-4 h-4 text-gray-500" />
+                              <Pencil className="w-4 h-4 text-white-500" />
                             )}
                           </button>
                         </td>

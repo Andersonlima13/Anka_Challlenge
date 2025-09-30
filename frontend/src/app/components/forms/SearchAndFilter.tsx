@@ -35,7 +35,7 @@ export function SearchAndFilter({
 }: SearchAndFilterProps) {
   return (
     <div className={`flex items-center space-x-4 ${className}`}>
-      <div className="relative">
+      <div className="relative ">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
           placeholder={searchPlaceholder}
@@ -47,8 +47,8 @@ export function SearchAndFilter({
       
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="flex items-center space-x-2">
-            <span>Filtrar por: {filterValue}</span>
+          <Button variant="outline" className="flex items-center space-x-2 text-muted-foreground">
+            <span >Filtrar por: {filterValue}</span>
             <ChevronDown className="w-4 h-4" />
           </Button>
         </DropdownMenuTrigger>
