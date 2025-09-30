@@ -1,0 +1,31 @@
+
+Regras de negocio da aplicacao 
+
+
+é possivel criar e gerenciar os usuarios 
+na tela de usuarios , faça o crud completo dos mesmos
+
+
+
+asset é um ativo financeiro (permitir crud talvez)
+buscar ativos na api para assimilar os allocations
+
+
+
+Allocation Representa a alocação de um ativo a um cliente.
+deve existir um crud de allocation (cliente faz) / podemos associar
+allocations a clients que devem apontar para nossos assets
+cliente pode ter varios allocations 
+
+
+
+---- em assets, deve constar os allocations / a quais clientes pertencem
+faça o crud e permita associar allocations a clients
+
+
+em clientes, permita o crudo completo dos mesmos 
+
+
+
+em movimentacoes devemos exibir as movimentacoes que o cliente tem feito
+entrada e saida , tipo de movimentacao, e a qual cliente ta associada
