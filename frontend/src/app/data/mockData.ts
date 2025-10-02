@@ -1,6 +1,16 @@
 import { ShoppingBag } from 'lucide-react';
 import { AdvisorData } from '@/components/ui/AdvisorsTable';
 
+
+
+
+export const mockClients = [
+  { name: 'Jane Cooper', email: 'jane.cooper@email.com' },
+  { name: 'Floyd Miles', email: 'floyd.miles@email.com' },
+  { name: 'Ronald Richards', email: 'ronald.richards@email.com' },
+  { name: 'Marvin McKinney', email: 'marvin.mckinney@email.com' },
+];
+
 export const mockAdvisorsData: AdvisorData[] = [
   {
     id: '1',

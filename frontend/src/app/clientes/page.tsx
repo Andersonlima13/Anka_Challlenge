@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/containers/DashboardLayout';
 import { MetricCard } from '@/app/components/cards/MetricCard';
 import { Button } from '@/app/components/ui/button';
@@ -9,30 +8,37 @@ import { SearchAndFilter } from '@/app/components/forms/SearchAndFilter';
 import { Pagination } from '@/app/components/forms/Pagination';
 import { User, UserPlus, Trash2, Pencil, Check } from 'lucide-react';
 import { ToastProvider } from '@/app/components/ui/toast';
-// Importe o modal de cliente (crie se não existir)
-import { UserFormModal } from '@/app/components/forms/UserFormModal';
-
-// Mock de clientes
-const mockClientsData = [
-  { name: 'Empresa Alpha', email: 'contato@alpha.com', status: 'ativo', createdAt: '2025-09-01' },
-  { name: 'Beta Ltda', email: 'beta@empresa.com', status: 'ativo', createdAt: '2025-08-15' },
-  { name: 'Gamma Corp', email: 'gamma@corp.com', status: 'inativo', createdAt: '2025-07-10' },
-  { name: 'Delta S/A', email: 'delta@sa.com', status: 'ativo', createdAt: '2025-06-20' },
-];
+import { clientService, Client } from '@/lib/api/services/clientService';
+import { ClientFormModal } from '../components/forms/ClientFormModal';
 
 export default function Clientes() {
   const [showClientModal, setShowClientModal] = useState(false);
-  const [clients, setClients] = useState(mockClientsData);
+  const [clients, setClients] = useState<Client[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [filterValue, setFilterValue] = useState('Todos');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedClients, setSelectedClients] = useState<string[]>([]);
-  const [editingClient, setEditingClient] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [selectedClients, setSelectedClients] = useState<number[]>([]);
+  const [editingClient, setEditingClient] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Client>>({});
+  const [loading, setLoading] = useState(true);
 
   const itemsPerPage = 8;
   const totalItems = clients.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const data = await clientService.getAll();
+        setClients(data);
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchClients();
+  }, []);
 
   const filteredData = clients.filter(client =>
     client.name.toLowerCase().includes(searchValue.toLowerCase()) ||
@@ -49,43 +55,58 @@ export default function Clientes() {
     { title: 'Clientes Inativos', value: totalInativos, icon: User },
   ];
 
-  const handleAddClient = (data: { name: string; email: string; status: string; createdAt: string }) => {
-    setClients([
-      ...clients,
-      {
+  const handleAddClient = async (data: { name: string; email: string; status: string }) => {
+    try {
+      const newClient = await clientService.create({
         name: data.name,
         email: data.email,
-        status: data.status,
-        createdAt: data.createdAt,
-      },
-    ]);
+        status: data.status as 'ativo' | 'inativo',
+      });
+      setClients([...clients, newClient]);
+    } catch (err) {
+      console.error('Erro ao adicionar cliente:', err);
+    }
   };
 
-  const handleToggleClientSelection = (email: string) => {
+  const handleToggleClientSelection = (id: number) => {
     setSelectedClients(prev =>
-      prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]
+      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
     );
   };
 
-  const handleDeleteSelected = () => {
-    setClients(clients.filter(c => !selectedClients.includes(c.email)));
-    setSelectedClients([]);
+  const handleDeleteSelected = async () => {
+    try {
+      await Promise.all(selectedClients.map(id => clientService.delete(id)));
+      setClients(clients.filter(c => !selectedClients.includes(c.id)));
+      setSelectedClients([]);
+    } catch (err) {
+      console.error('Erro ao excluir clientes:', err);
+    }
   };
 
-  const handleToggleEdit = (client: any) => {
-    if (editingClient === client.email) {
-      // Confirmar edição
-      setClients(prev =>
-        prev.map(c => (c.email === client.email ? { ...c, ...editForm } : c))
-      );
-      setEditingClient(null);
-      setEditForm({});
+  const handleToggleEdit = async (client: Client) => {
+    if (editingClient === client.id) {
+      try {
+        const updated = await clientService.update(client.id, editForm);
+        setClients(prev => prev.map(c => (c.id === updated.id ? updated : c)));
+        setEditingClient(null);
+        setEditForm({});
+      } catch (err) {
+        console.error('Erro ao atualizar cliente:', err);
+      }
     } else {
-      // Ativar modo edição com valores atuais
-      setEditingClient(client.email);
+      setEditingClient(client.id);
       setEditForm({ ...client });
     }
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout activeItem="clientes">
+        <p className="text-center text-muted-foreground">Carregando clientes...</p>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <ToastProvider>
@@ -101,15 +122,16 @@ export default function Clientes() {
           </Button>
         </div>
 
-        <UserFormModal
+        <ClientFormModal
           open={showClientModal}
           onClose={() => setShowClientModal(false)}
-          onSuccess={data => handleAddClient({
-            name: data.name,
-            email: data.email,
-            status: data.status,
-            createdAt: new Date().toISOString().slice(0, 10),
-          })}
+          onSuccess={data =>
+            handleAddClient({
+              name: data.name,
+              email: data.email,
+              status: data.status,
+            })
+          }
           fields={['name', 'email', 'status']}
           title="Adicionar Cliente"
           submitLabel="Cadastrar Cliente"
@@ -172,21 +194,21 @@ export default function Clientes() {
               <tbody>
                 {filteredData
                   .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((client, idx) => {
-                    const isEditing = editingClient === client.email;
+                  .map(client => {
+                    const isEditing = editingClient === client.id;
                     return (
-                      <tr key={idx} className="border-b border-border last:border-0 text-foreground">
+                      <tr key={client.id} className="border-b border-border last:border-0 text-foreground">
                         <td className="py-2 px-3">
                           <input
                             type="checkbox"
-                            checked={selectedClients.includes(client.email)}
-                            onChange={() => handleToggleClientSelection(client.email)}
+                            checked={selectedClients.includes(client.id)}
+                            onChange={() => handleToggleClientSelection(client.id)}
                           />
                         </td>
                         <td className="py-2 px-3">
                           {isEditing ? (
                             <input
-                              value={editForm.name}
+                              value={editForm.name ?? ''}
                               onChange={e => setEditForm({ ...editForm, name: e.target.value })}
                               className="border rounded px-2 py-1 w-full"
                             />
@@ -197,7 +219,7 @@ export default function Clientes() {
                         <td className="py-2 px-3">
                           {isEditing ? (
                             <input
-                              value={editForm.email}
+                              value={editForm.email ?? ''}
                               onChange={e => setEditForm({ ...editForm, email: e.target.value })}
                               className="border rounded px-2 py-1 w-full"
                             />
@@ -208,8 +230,8 @@ export default function Clientes() {
                         <td className="py-2 px-3">
                           {isEditing ? (
                             <select
-                              value={editForm.status}
-                              onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                              value={editForm.status ?? 'ativo'}
+                              onChange={e => setEditForm({ ...editForm, status: e.target.value as 'ativo' | 'inativo' })}
                               className="border rounded px-2 py-1"
                             >
                               <option value="ativo">Ativo</option>
@@ -231,7 +253,7 @@ export default function Clientes() {
                           {isEditing ? (
                             <input
                               type="date"
-                              value={editForm.createdAt}
+                              value={editForm.createdAt ?? ''}
                               onChange={e => setEditForm({ ...editForm, createdAt: e.target.value })}
                               className="border rounded px-2 py-1 w-full"
                             />

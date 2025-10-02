@@ -1,97 +1,110 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/app/components/containers/DashboardLayout';
 import { MetricCard } from '@/app/components/cards/MetricCard';
 import { Button } from '@/app/components/ui/button';
 import { SearchAndFilter } from '@/app/components/forms/SearchAndFilter';
 import { Pagination } from '@/app/components/forms/Pagination';
-import { MonthSelector } from '@/app/components/forms/MonthSelector';
-import { User, UserPlus, Trash2, Pencil, Check } from 'lucide-react';
+import { User as UserIcon, UserPlus, Trash2, Pencil, Check } from 'lucide-react';
 import { UserFormModal } from '@/app/components/forms/UserFormModal';
 import { ToastProvider } from '@/app/components/ui/toast';
-
-const mockUsersData = [
-  { name: 'Jane Cooper', email: 'jane.cooper@email.com', phone: '(11) 99999-0001', status: 'ativo' },
-  { name: 'Floyd Miles', email: 'floyd.miles@email.com', phone: '(21) 98888-0002', status: 'ativo' },
-  { name: 'Ronald Richards', email: 'ronald.richards@email.com', phone: '(31) 97777-0003', status: 'inativo' },
-  { name: 'Marvin McKinney', email: 'marvin.mckinney@email.com', phone: '(41) 96666-0004', status: 'ativo' },
-];
+import { userService, User } from '@/lib/api/services/userService';
 
 export default function Usuarios() {
   const [showUserModal, setShowUserModal] = useState(false);
-  const [users, setUsers] = useState(mockUsersData);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState('');
   const [filterValue, setFilterValue] = useState('Todos');
-  const [selectedMonth, setSelectedMonth] = useState('Janeiro');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+  const [editingUser, setEditingUser] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<any>({});
 
   const itemsPerPage = 8;
-  const totalItems = users.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const filteredData = users.filter(user =>
-    user.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchValue.toLowerCase()) ||
-    user.phone.includes(searchValue)
-  );
+  // Carregar usuários
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await userService.getAll();
+        setUsers(data);
+      } catch (err) {
+        console.error('Erro ao carregar usuários', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
+  // Métricas
   const totalCadastrados = users.length;
-  const totalAtivos = users.filter(u => u.status === 'ativo').length;
-  const totalInativos = users.filter(u => u.status === 'inativo').length;
+  const totalAtivos = users.filter(u => u.is_active).length;
+  const totalInativos = users.filter(u => !u.is_active).length;
 
   const metricsData = [
-    { title: 'Usuários Ativos', value: totalAtivos, icon: User },
-    { title: 'Usuários Cadastrados', value: totalCadastrados, icon: User },
-    { title: 'Usuários Inativos', value: totalInativos, icon: User },
+    { title: 'Usuários Ativos', value: totalAtivos, icon: UserIcon },
+    { title: 'Usuários Cadastrados', value: totalCadastrados, icon: UserIcon },
+    { title: 'Usuários Inativos', value: totalInativos, icon: UserIcon },
   ];
 
-  const handleAddUser = (data: { email: string; password: string; status: string }) => {
-    setUsers([
-      ...users,
-      {
-        name: data.email.split('@')[0],
-        email: data.email,
-        phone: '---',
-        status: data.status,
-      },
-    ]);
+  // CRUD
+  const handleAddUser = async (data: { email: string; password: string; status: string }) => {
+    const created = await userService.create({
+      email: data.email,
+      password: data.password,
+      is_active: data.status === 'ativo',
+    });
+    setUsers(prev => [...prev, created]);
   };
 
-  const handleToggleUserSelection = (email: string) => {
+  const handleToggleUserSelection = (id: number) => {
     setSelectedUsers(prev =>
-      prev.includes(email) ? prev.filter(e => e !== email) : [...prev, email]
+      prev.includes(id) ? prev.filter(u => u !== id) : [...prev, id]
     );
   };
 
-  const handleDeleteSelected = () => {
-    setUsers(users.filter(u => !selectedUsers.includes(u.email)));
+  const handleDeleteSelected = async () => {
+    for (const id of selectedUsers) {
+      await userService.delete(id);
+    }
+    setUsers(prev => prev.filter(u => !selectedUsers.includes(u.id)));
     setSelectedUsers([]);
   };
 
-  const handleToggleEdit = (user: any) => {
-    if (editingUser === user.email) {
+  const handleToggleEdit = async (user: User) => {
+    if (editingUser === user.id) {
       // Confirmar edição
-      setUsers(prev =>
-        prev.map(u => (u.email === user.email ? { ...u, ...editForm } : u))
-      );
+      const updated = await userService.update(user.id, {
+        email: editForm.email,
+        is_active: editForm.status === 'ativo',
+      });
+      setUsers(prev => prev.map(u => (u.id === user.id ? updated : u)));
       setEditingUser(null);
       setEditForm({});
     } else {
-      // Ativar modo edição com valores atuais
-      setEditingUser(user.email);
-      setEditForm({ ...user });
+      // Entrar em modo edição
+      setEditingUser(user.id);
+      setEditForm({
+        email: user.email,
+        status: user.is_active ? 'ativo' : 'inativo',
+      });
     }
   };
+
+  const filteredData = users.filter(user =>
+    user.email.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
+  const totalItems = filteredData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
     <ToastProvider>
       <DashboardLayout activeItem="usuarios">
         <div className="flex justify-between items-center mb-6">
-       
           <Button
             className="flex items-center gap-2"
             variant="default"
@@ -116,7 +129,6 @@ export default function Usuarios() {
               title={metric.title}
               value={metric.value}
               icon={metric.icon}
-              change={metric.change}
             />
           ))}
         </div>
@@ -156,9 +168,7 @@ export default function Usuarios() {
               <thead>
                 <tr className="text-muted-foreground border-b border-border">
                   <th className="py-2 px-3"></th>
-                  <th className="py-2 px-3">Nome</th>
                   <th className="py-2 px-3">Email</th>
-                  <th className="py-2 px-3">Telefone</th>
                   <th className="py-2 px-3">Status</th>
                   <th className="py-2 px-3">Ações</th>
                 </tr>
@@ -166,27 +176,16 @@ export default function Usuarios() {
               <tbody>
                 {filteredData
                   .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((user, idx) => {
-                    const isEditing = editingUser === user.email;
+                  .map(user => {
+                    const isEditing = editingUser === user.id;
                     return (
-                      <tr key={idx} className="border-b border-border last:border-0 text-foreground">
+                      <tr key={user.id} className="border-b border-border last:border-0 text-foreground">
                         <td className="py-2 px-3">
                           <input
                             type="checkbox"
-                            checked={selectedUsers.includes(user.email)}
-                            onChange={() => handleToggleUserSelection(user.email)}
+                            checked={selectedUsers.includes(user.id)}
+                            onChange={() => handleToggleUserSelection(user.id)}
                           />
-                        </td>
-                        <td className="py-2 px-3">
-                          {isEditing ? (
-                            <input
-                              value={editForm.name}
-                              onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                              className="border rounded px-2 py-1 w-full"
-                            />
-                          ) : (
-                            user.name
-                          )}
                         </td>
                         <td className="py-2 px-3">
                           {isEditing ? (
@@ -197,17 +196,6 @@ export default function Usuarios() {
                             />
                           ) : (
                             user.email
-                          )}
-                        </td>
-                        <td className="py-2 px-3">
-                          {isEditing ? (
-                            <input
-                              value={editForm.phone}
-                              onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
-                              className="border rounded px-2 py-1 w-full"
-                            />
-                          ) : (
-                            user.phone
                           )}
                         </td>
                         <td className="py-2 px-3">
@@ -223,12 +211,12 @@ export default function Usuarios() {
                           ) : (
                             <span
                               className={`px-3 py-1 rounded text-xs font-semibold ${
-                                user.status === 'ativo'
+                                user.is_active
                                   ? 'bg-green-500 text-white'
                                   : 'bg-red-500 text-white'
                               }`}
                             >
-                              {user.status}
+                              {user.is_active ? 'ativo' : 'inativo'}
                             </span>
                           )}
                         </td>
