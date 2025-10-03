@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { toast, ToastProvider } from '@/app/components/ui/toast';
@@ -8,6 +9,13 @@ import { toast, ToastProvider } from '@/app/components/ui/toast';
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('unauthorized') === '1') {
+      toast.error('Você precisa estar logado para acessar essa página.');
+    }
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,17 +25,15 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulação de login (substitua pela lógica real)
     if (form.email === '' || form.password === '') {
       toast.error('Preencha todos os campos.');
       setLoading(false);
       return;
     }
-    // Simulação de sucesso
+
     setTimeout(() => {
       toast.success('Login realizado com sucesso!');
       setLoading(false);
-      // Redirecionar ou atualizar estado global aqui
     }, 1000);
   };
 
@@ -66,5 +72,5 @@ export default function Login() {
         </div>
       </div>
     </ToastProvider>
-    );
+  );
 }

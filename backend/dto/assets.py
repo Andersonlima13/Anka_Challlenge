@@ -1,36 +1,43 @@
 from pydantic import BaseModel
-from datetime import date
+from typing import Optional
 
-# Asset DTOs
-class AssetCreateDTO(BaseModel):
+# ================== Asset DTOs ==================
+
+class AssetBaseDTO(BaseModel):
     ticker: str
     name: str
     exchange: str
     currency: str
 
-class AssetResponseDTO(BaseModel):
+class AssetCreateDTO(AssetBaseDTO):
+    pass
+
+class AssetUpdateDTO(BaseModel):
+    ticker: Optional[str] = None
+    name: Optional[str] = None
+    exchange: Optional[str] = None
+    currency: Optional[str] = None
+
+class AssetResponseDTO(AssetBaseDTO):
     id: int
-    ticker: str
-    name: str
-    exchange: str
-    currency: str
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True
+    }
 
-# Allocation DTOs
+# ================== Allocation DTOs ==================
+
 class AllocationCreateDTO(BaseModel):
     client_id: int
     asset_id: int
-    quantity: float
-    buy_price: float
-    buy_date: date
+    percentage: float
 
 class AllocationResponseDTO(BaseModel):
     id: int
     client_id: int
     asset_id: int
-    quantity: float
-    buy_price: float
-    buy_date: date
+    percentage: float
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True
+    }
