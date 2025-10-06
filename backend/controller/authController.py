@@ -24,16 +24,21 @@ def get_db():
 def login(data: LoginDTO, db: Session = Depends(get_db)):
     auth_service = AuthService(db)
     user = auth_service.authenticate_user(data.email, data.password)
+    
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Invalid credentials"
+        )
     
     access_token = auth_service.create_access_token(
         data={"sub": str(user.id)}, expires_delta=timedelta(minutes=60)
     )
-    return TokenResponseDTO(access_token=access_token)
+
+    # ✅ Não retorna client_id, apenas o token e tipo
+    return {"access_token": access_token, "token_type": "bearer"}
 
 # Rota de logout (PROTEGIDA)
 @router.post("/logout")
 def logout(current_user=Depends(get_current_user)):
-    # Aqui você poderia adicionar lógica de blacklist de tokens, etc.
     return {"message": f"Logout successful for user {current_user.email}"}

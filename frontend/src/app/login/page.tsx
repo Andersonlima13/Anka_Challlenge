@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { toast, ToastProvider } from '@/app/components/ui/toast';
+import { authService } from '@/lib/api/services/authService';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     if (searchParams.get('unauthorized') === '1') {
@@ -25,16 +27,24 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    if (form.email === '' || form.password === '') {
+    if (!form.email || !form.password) {
       toast.error('Preencha todos os campos.');
       setLoading(false);
       return;
     }
 
-    setTimeout(() => {
+    try {
+      await authService.login(form); // 🔥 chamada real à API
       toast.success('Login realizado com sucesso!');
+      router.push('/usuarios'); // ✅ redirecionamento após login
+    } catch (err: any) {
+      console.error('Erro ao logar:', err);
+      const message =
+        err.response?.data?.detail || 'Email ou senha incorretos.';
+      toast.error(message);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (

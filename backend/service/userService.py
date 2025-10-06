@@ -15,6 +15,8 @@ class UserService:
 
     def get_all(self) -> list[UserResponseDTO]:
         users = self.db.query(Users).all()
+        if not users:
+            raise HTTPException(status_code=404, detail="Nenhum usuário encontrado")
         return [UserResponseDTO.model_validate(u) for u in users]
 
     def get_by_id(self, user_id: int) -> Optional[UserResponseDTO]:
